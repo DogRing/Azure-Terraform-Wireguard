@@ -66,6 +66,12 @@ resource "azurerm_route_table" "main" {
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 }
+resource "azurerm_subnet_route_table_association" "main" {
+  count = length(azurerm_route_table.main)
+  subnet_id = azurerm_subnet.main[count.index].id
+  route_table_id = azurerm_route_table.main[count.index].id
+}
+
 resource "azurerm_route" "Node" {
   count = length(azurerm_route_table.main)
   name = "route-${var.project_name}-vpn-${count.index}"
@@ -75,22 +81,6 @@ resource "azurerm_route" "Node" {
   next_hop_type = "VirtualAppliance"
   next_hop_in_ip_address = data.azurerm_network_interface.vpn.private_ip_address
 }
-# resource "azurerm_route" "main" {
-#   count = length(azurerm_route_table.main)
-#   name = "route-${var.project_name}-igw-${count.index}"
-#   resource_group_name = azurerm_resource_group.main.name
-#   route_table_name = azurerm_route_table.main[count.index].name
-#   address_prefix = "0.0.0.0/0"
-#   next_hop_type = "VirtualAppliance"
-#   next_hop_in_ip_address = azurerm_nat_gateway.main[count.index].ip_configuration.private_ip_address
-# }
-
-resource "azurerm_subnet_route_table_association" "main" {
-  count = length(azurerm_route_table.main)
-  subnet_id = azurerm_subnet.main[count.index].id
-  route_table_id = azurerm_route_table.main[count.index].id
-}
-
 resource "azurerm_route" "vpn-client" {
   count = length(azurerm_route_table.main)
   name = "route-${var.project_name}-vpn-client-${count.index}"
@@ -100,17 +90,3 @@ resource "azurerm_route" "vpn-client" {
   next_hop_type = "VirtualAppliance"
   next_hop_in_ip_address = data.azurerm_network_interface.vpn.private_ip_address
 }
-
-# data "azurerm_route_table" "vpn" {
-#   name = "VPNrt"
-#   resource_group_name = data.azurerm_resource_group.main.name
-# }
-
-# resource "azurerm_route" "vpn-node" {
-#   name = "vpn-node"
-#   resource_group_name = data.azurerm_resource_group.main.name
-#   route_table_name = data.azurerm_route_table.vpn.name
-#   address_prefix = azurerm_subnet.main.address_prefixes[0]
-#   next_hop_type = "VnetPeering"
-#   next_hop_in_ip_address = ""
-# }

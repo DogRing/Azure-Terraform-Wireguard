@@ -1,12 +1,14 @@
 data "external" "microk8sAddNode" {
+  count = var.node_count
   program = ["bash", "${path.module}/get_node_config.sh"]
 }
 
 data "template_file" "userdata" {
+  count = var.node_count
   template = file("userdata.tpl")
   vars = {
     vpn_ip = data.azurerm_network_interface.vpn.private_ip_address
-    microk8sAddNode = data.external.microk8sAddNode.result.output
+    microk8sAddNode = data.external.microk8sAddNode[count.index].result.output
     username = var.username
   }
 }
@@ -19,10 +21,10 @@ resource "azurerm_linux_virtual_machine" "main" {
   resource_group_name = azurerm_resource_group.main.name
   network_interface_ids = [ azurerm_network_interface.main[count.index].id ]
   size = var.vm_image
-  admin_username = data.template_file.userdata.vars.username
+  admin_username = data.template_file.userdata[count.index].vars.username
 
   admin_ssh_key {
-    username = data.template_file.userdata.vars.username
+    username = data.template_file.userdata[count.index].vars.username
     public_key = file(var.public_key_path)
   }
 
@@ -42,8 +44,9 @@ resource "azurerm_linux_virtual_machine" "main" {
   provisioner "local-exec" {
     when = destroy
     command = "microk8s remove-node ${self.private_ip_address} --force"
+    on_failure = "continue"
   }
-  custom_data = base64encode(data.template_file.userdata.rendered)
+  custom_data = base64encode(data.template_file.userdata[count.index].rendered)
 }
 
 resource "azurerm_network_interface" "main" {

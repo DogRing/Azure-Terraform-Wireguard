@@ -9,7 +9,7 @@ terraform {
     resource_group_name = "RG_tfstate"
     storage_account_name = "satfstate14885"
     container_name = "tfstate"
-    key ="NODEcopy-terraform.tfstate"
+    key ="NODEs-terraform.tfstate"
   }
 }
 
