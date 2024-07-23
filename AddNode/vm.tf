@@ -7,7 +7,7 @@ data "template_file" "userdata" {
   vars = {
     vpn_ip = data.azurerm_network_interface.vpn.private_ip_address
     microk8sAddNode = data.external.microk8sAddNode.result.output
-    username = "dogring232"
+    username = var.username
   }
 }
 
@@ -18,7 +18,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   network_interface_ids = [ azurerm_network_interface.main[count.index].id ]
-  size = "Standard_DS11-1_v2"
+  size = var.vm_image
   admin_username = data.template_file.userdata.vars.username
 
   admin_ssh_key {
@@ -39,16 +39,12 @@ resource "azurerm_linux_virtual_machine" "main" {
     version   = "latest"
   }
 
+  provisioner "local-exec" {
+    when = destroy
+    command = "microk8s remove-node ${self.private_ip_address} --force"
+  }
   custom_data = base64encode(data.template_file.userdata.rendered)
 }
-
-# resource "azurerm_public_ip" "vm" {
-#   count = var.node_count
-#   name = "pip-vm-${var.project_name}-${count.index}"
-#   location = azurerm_resource_group.main.location
-#   resource_group_name = azurerm_resource_group.main.name
-#   allocation_method = "Static"
-# }
 
 resource "azurerm_network_interface" "main" {
   count = var.node_count
@@ -60,6 +56,5 @@ resource "azurerm_network_interface" "main" {
     name = "nic-config-${var.project_name}-${count.index}"
     subnet_id = azurerm_subnet.main[count.index % length(azurerm_subnet.main)].id
     private_ip_address_allocation = "Dynamic"
-    # public_ip_address_id = azurerm_public_ip.vm[count.index % length(azurerm_subnet.main)].id
   }
 }
