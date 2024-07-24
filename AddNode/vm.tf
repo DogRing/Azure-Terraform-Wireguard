@@ -10,7 +10,7 @@ data "template_file" "userdata" {
     vpn_ip = data.azurerm_network_interface.vpn.private_ip_address
     microk8sAddNode = data.external.microk8sAddNode[count.index].result.output
     node_name = lower("vm-${var.project_name}-${count.index}")
-    node_ip = azurerm_network_interface.main.private_ip_address
+    node_ip = azurerm_network_interface.main[count.index].private_ip_address
     node_spec = var.vm_spec
     username = var.username
   }
