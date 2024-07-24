@@ -13,7 +13,7 @@ variable "node_count" { type = number }
 variable "node_vnet_address" { type = string }
 variable "node_subnet_address" { type = list(string) }
 
-variable "vm_image" { type = string }
+variable "vm_spec" { type = string }
 variable "username" { type = string }
 variable "public_key_path" {
   type = string
