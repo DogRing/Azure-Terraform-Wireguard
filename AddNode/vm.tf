@@ -1,29 +1,29 @@
 data "external" "microk8sAddNode" {
-  count = var.node_count
+  count = local.az_var.node_count
   program = ["bash", "${path.module}/get_node_config.sh"]
 }
 
 data "template_file" "userdata" {
-  count = var.node_count
+  count = local.az_var.node_count
   template = file("userdata.tpl")
   vars = {
     vpn_ip = data.azurerm_network_interface.vpn.private_ip_address
     microk8sAddNode = data.external.microk8sAddNode[count.index].result.output
     node_name = lower("vm-${var.project_name}-${count.index}")
     node_ip = azurerm_network_interface.main[count.index].private_ip_address
-    node_spec = var.vm_spec
+    node_spec = local.az_var.vm_spec
     username = var.username
   }
 }
 
 resource "azurerm_linux_virtual_machine" "main" {
-  count = var.node_count
+  count = local.az_var.node_count
 
-  name = "vm-${var.project_name}-${count.index}"
+  name = "vm-${local.az_var.vm_name}-${count.index}"
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   network_interface_ids = [ azurerm_network_interface.main[count.index].id ]
-  size = var.vm_spec
+  size = local.az_var.vm_spec
   admin_username = data.template_file.userdata[count.index].vars.username
 
   admin_ssh_key {
@@ -32,7 +32,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   }
 
   os_disk {
-    name = "OsDisk-${var.project_name}-${count.index}"
+    name = "osDisk-${var.project_name}-${count.index}"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
@@ -53,7 +53,7 @@ resource "azurerm_linux_virtual_machine" "main" {
 }
 
 resource "azurerm_network_interface" "main" {
-  count = var.node_count
+  count = local.az_var.node_count
   name = "nic-${var.project_name}-${count.index}"
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name 

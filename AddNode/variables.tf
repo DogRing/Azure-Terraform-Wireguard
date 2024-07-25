@@ -4,18 +4,21 @@ variable "vpn_virtual_network_name" { type = string }
 variable "vpn_subnet_name" { type = string }
 variable "vpn_nic_name" { type = string }
 
-# Node Variables
-variable "resource_group_name" { type = string }
-variable "location" { type = string }
+# tenants
+variable "default_tenant" { type = map }
+variable "gpu_tenant" { type = map }
+
+# shared variables
 variable "project_name" { type = string }
-variable "node_count" { type = number }
-
-variable "node_vnet_address" { type = string }
-variable "node_subnet_address" { type = list(string) }
-
-variable "vm_spec" { type = string }
 variable "username" { type = string }
 variable "public_key_path" {
   type = string
   default = "~/.ssh/id_azure.pub"
 }
+
+# tenant variables
+variable "default_variables" { type = map }
+variable "default_route_addresses" { type = list }
+
+variable "gpu_variables" { type = map }
+variable "gpu_route_addresses" { type = list }

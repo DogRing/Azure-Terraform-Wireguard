@@ -1,20 +1,20 @@
 # Node network
 resource "azurerm_resource_group" "main" {
-  name = var.resource_group_name
-  location = var.location
+  name = local.az_var.resource_group_name
+  location = local.az_var.location
 }
 resource "azurerm_virtual_network" "main" {
   name = "vnet-${var.project_name}"
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  address_space = [var.node_vnet_address]
+  address_space = [local.az_var.node_vnet_address]
 }
 resource "azurerm_subnet" "main" {
-  count = length(var.node_subnet_address)
+  count = length(split(",",local.az_var.subnet_addresses))
   name = "subnet-${var.project_name}-${count.index}"
   resource_group_name = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
-  address_prefixes = [var.node_subnet_address[count.index]]
+  address_prefixes = [split(",",local.az_var.subnet_addresses)[count.index]]
 }
 
 # vNet Peering
@@ -72,21 +72,12 @@ resource "azurerm_subnet_route_table_association" "main" {
   route_table_id = azurerm_route_table.main[count.index].id
 }
 
-resource "azurerm_route" "Node" {
-  count = length(azurerm_route_table.main)
-  name = "route-${var.project_name}-vpn-${count.index}"
-  resource_group_name = azurerm_resource_group.main.name
-  route_table_name = azurerm_route_table.main[count.index].name
-  address_prefix = "192.168.0.0/24"
-  next_hop_type = "VirtualAppliance"
-  next_hop_in_ip_address = data.azurerm_network_interface.vpn.private_ip_address
-}
 resource "azurerm_route" "vpn-client" {
-  count = length(azurerm_route_table.main)
+  count = (length(azurerm_route_table.main) * length(local.az_route_addresses))
   name = "route-${var.project_name}-vpn-client-${count.index}"
   resource_group_name = azurerm_resource_group.main.name
-  route_table_name = azurerm_route_table.main[count.index].name
-  address_prefix = "10.255.255.128/25"
+  route_table_name = azurerm_route_table.main[floor(count.index / length(local.az_route_addresses))].name
+  address_prefix = local.az_route_addresses[floor(count.index % length(local.az_route_addresses))]
   next_hop_type = "VirtualAppliance"
   next_hop_in_ip_address = data.azurerm_network_interface.vpn.private_ip_address
 }
