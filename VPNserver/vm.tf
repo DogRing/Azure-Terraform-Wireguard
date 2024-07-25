@@ -1,16 +1,14 @@
 data "template_file" "userdata" {
   template = file("userdata.tpl")
   vars = {
-    server_ip          = azurerm_public_ip.main.ip_address
-    vpn_server_ip      = local.az_var.vpn_server_ip
-    vpn_peer_ip        = local.az_var.vpn_peer_ip
-    server_private_key = local.az_var.server_private_key
-    client_public_key  = local.az_var.client_public_key
-    vpn_port           = local.az_var.vpn_port
-    vm_private_ip      = local.az_var.vm_private_ip
-
-    onprem_address_prefix     = var.onprem_address_prefix
-    vpn_client_address_prefix = var.vpn_client_address_prefix
+    server_ip             = azurerm_public_ip.main.ip_address
+    vpn_server_ip         = local.az_var.vpn_server_ip
+    vpn_peer_ip           = local.az_var.vpn_peer_ip
+    server_private_key    = local.az_var.server_private_key
+    client_public_key     = local.az_var.client_public_key
+    vpn_port              = local.az_var.vpn_port
+    vm_private_ip         = local.az_var.vm_private_ip
+    onprem_address_prefix = var.route_address_prefix[0]
   }
 }
 

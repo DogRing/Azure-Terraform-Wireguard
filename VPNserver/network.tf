@@ -69,22 +69,15 @@ resource "azurerm_route_table" "main" {
 }
 
 resource "azurerm_route" "vpn" {
-  name                   = "route-${var.project_name}-vpn"
+  count                  = length(var.route_address_prefix)
+  name                   = "route-${var.project_name}-vpn-${count.index}"
   resource_group_name    = azurerm_resource_group.main.name
   route_table_name       = azurerm_route_table.main.name
-  address_prefix         = var.onprem_address_prefix
+  address_prefix         = var.route_address_prefix[count.index]
   next_hop_type          = "VirtualAppliance"
   next_hop_in_ip_address = azurerm_network_interface.main.private_ip_address
 }
 
-resource "azurerm_route" "vpn-client" {
-  name                   = "route-${var.project_name}-vpn-client"
-  resource_group_name    = azurerm_resource_group.main.name
-  route_table_name       = azurerm_route_table.main.name
-  address_prefix         = var.vpn_client_address_prefix
-  next_hop_type          = "VirtualAppliance"
-  next_hop_in_ip_address = azurerm_network_interface.main.private_ip_address
-}
 resource "azurerm_route" "IGW" {
   name                = "route-${var.project_name}-igw"
   resource_group_name = azurerm_resource_group.main.name
