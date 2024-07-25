@@ -7,6 +7,6 @@ locals {
 }
 
 output "current_time" {
-  value = local.current_time
+  value       = local.current_time
   description = "Current TUC time"
 }
