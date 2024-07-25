@@ -8,24 +8,23 @@ sudo apt install -y wireguard
 sudo sh -c 'echo "127.0.1.1 $(hostname)" >> /etc/hosts'
 
 # Variables
-SERVER_PRIVATE_KEY=$(wg genkey)
-SERVER_PUBLIC_KEY=$(echo $SERVER_PRIVATE_KEY | wg pubkey)
-CLIENT_PRIVATE_KEY=$(wg genkey)
-CLIENT_PUBLIC_KEY=$(echo $CLIENT_PRIVATE_KEY | wg pubkey)
+SERVER_PRIVATE_KEY=${server_private_key}
+CLIENT_PUBLIC_KEY=${client_public_key}
+
 SERVER_IP=${server_ip}
 SERVER_PORT=${vpn_port}
 SERVER_WG_INTERFACE="wg0"
 
-SERVER_VPN_IP="10.255.255.128/25"
-CLIENT_VPN_IP="10.255.255.129/25"
-CLIENT_NETWORK="192.168.0.0/24"
+SERVER_VPN_IP=${vpn_server_ip}
+CLIENT_VPN_IP=${vpn_peer_ip}
+CLIENT_NETWORK=${onprem_address_prefix}
 
 WG_DIR="/etc/wireguard"
 SERVER_WG_CONFIG="$WG_DIR/$SERVER_WG_INTERFACE.conf"
-CLIENT_WG_CONFIG="$WG_DIR/client.conf"
 
 sudo sysctl -w net.ipv4.ip_forward=1
 
+# Server configuration
 echo "[Interface]
 PrivateKey = $SERVER_PRIVATE_KEY
 Address = $SERVER_VPN_IP
@@ -35,18 +34,6 @@ ListenPort = $SERVER_PORT
 PublicKey = $CLIENT_PUBLIC_KEY
 AllowedIPs = $CLIENT_VPN_IP, $CLIENT_NETWORK
 " | sudo tee $SERVER_WG_CONFIG
-
-# Generate client configuration
-echo "[Interface]
-PrivateKey = $CLIENT_PRIVATE_KEY
-Address = $CLIENT_VPN_IP
-DNS = 168.126.63.2
-
-[Peer]
-PublicKey = $SERVER_PUBLIC_KEY
-Endpoint = $SERVER_IP:$SERVER_PORT 
-AllowedIPs = 10.0.0.0/8
-" | sudo tee $CLIENT_WG_CONFIG
 
 # Start WireGuard
 sudo wg-quick up $SERVER_WG_INTERFACE
