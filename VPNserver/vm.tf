@@ -15,7 +15,7 @@ data "template_file" "userdata" {
 }
 
 resource "azurerm_linux_virtual_machine" "main" {
-  name = "vm-${local.az_var.project_name}"
+  name = "vm-${var.project_name}"
   resource_group_name = azurerm_resource_group.main.name
   location = azurerm_resource_group.main.location
   size = var.vm_size
@@ -28,7 +28,7 @@ resource "azurerm_linux_virtual_machine" "main" {
   }
 
   os_disk {
-    name = "osdisk${local.az_var.project_name}"
+    name = "osdisk${var.project_name}"
     caching           = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }

@@ -1,31 +1,31 @@
 resource "azurerm_resource_group" "main" {
-  name     = "rg-${local.az_var.project_name}"
+  name     = "rg-${var.project_name}"
   location = local.az_var.location
 }
 
 resource "azurerm_virtual_network" "main" {
-  name = "vnet-${local.az_var.project_name}"
+  name = "vnet-${var.project_name}"
   address_space = [local.az_var.vnet_address_space]
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 }
 
 resource "azurerm_subnet" "main" {
-  name = "subnet-${local.az_var.project_name}"
+  name = "subnet-${var.project_name}"
   resource_group_name = azurerm_resource_group.main.name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes = [local.az_var.subnet_address_space]
 }
 
 resource "azurerm_public_ip" "main" {
-  name = "pip-${local.az_var.project_name}"
+  name = "pip-${var.project_name}"
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   allocation_method = "Static"
 }
 
 resource "azurerm_network_interface" "main" {
-  name = "nic-${local.az_var.project_name}"
+  name = "nic-${var.project_name}"
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   enable_ip_forwarding = true
@@ -40,7 +40,7 @@ resource "azurerm_network_interface" "main" {
 }
 
 resource "azurerm_network_security_group" "main" {
-  name = "nsg-${local.az_var.project_name}"
+  name = "nsg-${var.project_name}"
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
@@ -74,13 +74,13 @@ resource "azurerm_subnet_network_security_group_association" "main" {
 }
 
 resource "azurerm_route_table" "main" {
-  name = "rt-${local.az_var.project_name}"
+  name = "rt-${var.project_name}"
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 }
 
 resource "azurerm_route" "vpn" {
-  name = "route-${local.az_var.project_name}-vpn"
+  name = "route-${var.project_name}-vpn"
   resource_group_name = azurerm_resource_group.main.name
   route_table_name = azurerm_route_table.main.name
   address_prefix = var.onprem_address_prefix
@@ -89,7 +89,7 @@ resource "azurerm_route" "vpn" {
 }
 
 resource "azurerm_route" "vpn-client" {
-  name = "route-${local.az_var.project_name}-vpn-client"
+  name = "route-${var.project_name}-vpn-client"
   resource_group_name = azurerm_resource_group.main.name
   route_table_name = azurerm_route_table.main.name
   address_prefix = var.vpn_client_address_prefix
@@ -97,7 +97,7 @@ resource "azurerm_route" "vpn-client" {
   next_hop_in_ip_address = azurerm_network_interface.main.private_ip_address
 }
 resource "azurerm_route" "IGW" {
-  name = "route-${local.az_var.project_name}-igw"
+  name = "route-${var.project_name}-igw"
   resource_group_name = azurerm_resource_group.main.name
   route_table_name = azurerm_route_table.main.name
   address_prefix = "0.0.0.0/0"
