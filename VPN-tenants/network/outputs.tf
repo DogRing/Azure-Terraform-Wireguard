@@ -7,6 +7,7 @@ output "nic-address" { value = azurerm_network_interface.main.private_ip_address
 output "vpn_interface_ip" { value = var.vpn_interface_ip }
 output "vpn_private_key" { 
   value = length(var.key_gen) > 0 ? trimspace(data.local_file.private_key[0].content) : var.private_key
+  sensitive = true
 }
 output "vpn_port" { value = var.vpn_port}
 
@@ -16,6 +17,7 @@ output "wg-peer" {
     endpoint    = "${azurerm_public_ip.main.ip_address}:${var.vpn_port}"
     allowed_ips = "${var.allowed_ips}, ${var.vpn_interface_ip}"
   })
+  sensitive = true
 }
 
 output "pip" { value = azurerm_public_ip.main.ip_address}
