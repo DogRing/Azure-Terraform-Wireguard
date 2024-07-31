@@ -38,10 +38,10 @@ resource "azurerm_linux_virtual_machine" "main" {
   }
 
   source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
+    publisher = var.vm_data.image_publisher
+    offer     = var.vm_data.image_offer
+    sku       = var.vm_data.image_sku
+    version   = var.vm_data.image_version
   }
 
   custom_data = base64encode(data.template_file.userdata.rendered)
