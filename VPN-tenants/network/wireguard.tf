@@ -13,21 +13,20 @@ resource "terraform_data" "generate_public" {
   provisioner "local-exec" {
     command = "echo ${var.private_key} | wg pubkey > ${path.module}/keys/${local.key_name}-public.key"
   }
-  triggers_replace = { always_run = "${timestamp()}"}
 }
 
 # key generate both
 resource "terraform_data" "generate_keys" {
-  count = var.key_gen != "" ? 1 : 0
+  count = var.private_key == "" ? 1 : 0
   provisioner "local-exec" {
-    command = "wg genkey | tee ${path.module}/keys/${var.key_gen}-private.key | wg pubkey > ${path.module}/keys/${var.key_gen}-public.key"
+    command = "wg genkey | tee ${path.module}/keys/${local.key_name}-private.key | wg pubkey > ${path.module}/keys/${local.key_name}-public.key"
   }
   triggers_replace = { always_run = "${timestamp()}"}
 }
 data "local_file" "private_key" {
-  count = var.key_gen != "" ? 1 : 0
+  count = var.private_key == "" ? 1 : 0
   depends_on = [ terraform_data.generate_keys ]
-  filename = "${path.module}/keys/${var.key_gen}-private.key"
+  filename = "${path.module}/keys/${local.key_name}-private.key"
 }
 data "local_file" "public_key" {
   depends_on = [ terraform_data.generate_keys, terraform_data.generate_public ]
