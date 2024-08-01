@@ -11,7 +11,7 @@ data "template_file" "userdata" {
     microk8sAddNode = data.external.microk8sAddNode[count.index].result.output
     node_name = lower("vm-${var.project_name}-${count.index}")
     node_ip = azurerm_network_interface.main[count.index].private_ip_address
-    username = var.vm_config.vm_name
+    username = var.vm_config.username
   }
 }
 
@@ -23,10 +23,10 @@ resource "azurerm_linux_virtual_machine" "main" {
   resource_group_name = azurerm_resource_group.main.name
   network_interface_ids = [ azurerm_network_interface.main[count.index].id ]
   size = var.vm_config.vm_spec
-  admin_username = var.vm_config.vm_name
+  admin_username = var.vm_config.username
 
   admin_ssh_key {
-    username = var.vm_config.vm_name
+    username = var.vm_config.username
     public_key = file(var.vm_config.public_key_path)
   }
 
