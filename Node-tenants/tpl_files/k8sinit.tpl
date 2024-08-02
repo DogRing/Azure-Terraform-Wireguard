@@ -99,4 +99,44 @@ sudo chown $(id -u):$(id -g) ~/.kube/config
 curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
 kubectl apply -f calico.yaml
 
+# dashboard 설치
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+
+## Dashboard 생성을 위한 SA 생성과 권한 부여 namespace: dashboard 에 만들어 놓음
+mkdir dashboard_rbac && cd $_
+echo "apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+" > dashboard-admin-user.yaml
+
+echo "apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+" > ClusterRoleBinding-admin-user.yml
+
+kubeclt apply -f dashboard-admin-user.yaml
+kubectl apply -f ClusterRoleBinding-admin-user.yml
+
+# SA 토큰 확인
+kubectl -n kubernetes-dashboard create token admin-user
+
+# cert와 key 생성
+grep 'client-certificate-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d >> kubecfg.crt
+grep 'client-key-data' ~/.kube/config | head -n 1 | awk '{print $2}' | base64 -d >> kubecfg.key
+
+# 키를 기반으로 p12 인증서 파일 생성 (인증서 암호 설정)
+openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.p12 -name "kubernetes-admin"
+
+# 클러스터 생성시 가지는 인증서
+sudo cp /etc/kubernetes/pki/ca.crt  ./
