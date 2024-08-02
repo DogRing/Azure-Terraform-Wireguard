@@ -1,10 +1,10 @@
 data "external" "microk8sAddNode" {
-  count = var.node_count
+  count = var.microk8s ? var.node_count : 0
   program = ["bash", "${path.module}/get_node_config.sh"]
 }
 
-data "template_file" "userdata" {
-  count = var.node_count
+data "template_file" "microk8s" {
+  count = var.microk8s ? var.node_count : 0
   template = file(var.vm_config.template_file)
   vars = {
     vpn_ip = data.azurerm_network_interface.vpn.private_ip_address
@@ -13,6 +13,18 @@ data "template_file" "userdata" {
     node_ip = azurerm_network_interface.main[count.index].private_ip_address
     username = var.vm_config.username
   }
+}
+
+data "template_file" "normal" {
+  count = var.node_count
+  template = file(var.vm_config.template_file)
+  vars = {
+    username = var.vm_config.username
+  }
+}
+
+locals {
+  custom_data = var.microk8s ? data.template_file.microk8s : data.template_file.normal
 }
 
 resource "azurerm_linux_virtual_machine" "main" {
@@ -48,11 +60,11 @@ resource "azurerm_linux_virtual_machine" "main" {
     command = "microk8s remove-node ${self.private_ip_address} --force"
     on_failure = "continue"
   }
-  custom_data = base64encode(data.template_file.userdata[count.index].rendered)
+  custom_data = base64encode(local.custom_data[count.index].rendered)
 }
 
 resource "azurerm_virtual_machine_extension" "nvidia" {
-  count = var.gpu == true ? length(var.node_count) : 0
+  count = var.gpu ? length(var.node_count) : 0
   name = "gpu-driver-extension"
   virtual_machine_id = azurerm_linux_virtual_machine.main[count.index].id
   publisher = "Microsoft.HpcCompute"
@@ -66,6 +78,7 @@ resource "azurerm_network_interface" "main" {
   name = "nic-${var.project_name}-${count.index}"
   location = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name 
+  enable_ip_forwarding = true
 
   ip_configuration {
     name = "nic-config-${var.project_name}-${count.index}"

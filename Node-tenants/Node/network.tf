@@ -49,12 +49,12 @@ resource "azurerm_public_ip" "main" {
   sku = "Standard"
 }
 resource "azurerm_nat_gateway_public_ip_association" "main" {
-  count = length(azurerm_subnet.main)
+  count = length(azurerm_nat_gateway.main)
   nat_gateway_id = azurerm_nat_gateway.main[count.index].id
   public_ip_address_id = azurerm_public_ip.main[count.index].id
 }
 resource "azurerm_subnet_nat_gateway_association" "main" {
-  count = length(azurerm_subnet.main)
+  count = length(azurerm_nat_gateway.main)
   subnet_id = azurerm_subnet.main[count.index].id
   nat_gateway_id = azurerm_nat_gateway.main[count.index].id
 }

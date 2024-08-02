@@ -9,7 +9,7 @@ locals {
   key_name = var.key_gen == "" ? random_string.key.result : var.key_gen
 }
 resource "terraform_data" "generate_public" {
-  count = var.private_key != "" ? 1 : 0
+  count = var.private_key == "" ? 0 : 1
   provisioner "local-exec" {
     command = "echo ${var.private_key} | wg pubkey > ${path.module}/keys/${local.key_name}-public.key"
   }

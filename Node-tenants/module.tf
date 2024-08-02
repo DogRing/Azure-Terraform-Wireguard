@@ -25,5 +25,5 @@ module "Node-gpu" {
   route_addresses = [ "10.255.255.128/25", "192.168.0.0/24", "10.10.0.0/16" ]
 
   vpn_config = var.vpn_config
-  vm_config = var.vm_config.k8s
+  vm_config = var.vm_config.gpu
 }

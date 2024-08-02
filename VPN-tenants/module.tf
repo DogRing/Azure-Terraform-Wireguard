@@ -13,6 +13,7 @@ module "network-k8s" {
 
   private_key = var.private_key_k8s
   vpn_port    = var.vpn_port
+  enable-ssh  = var.ssh-ips
   enable-igw  = true
 }
 module "network-gpu" {
@@ -29,6 +30,7 @@ module "network-gpu" {
 
   private_key = var.private_key_gpu
   vpn_port    = var.vpn_port
+  enable-ssh  = var.ssh-ips
   enable-igw  = true
 }
 
