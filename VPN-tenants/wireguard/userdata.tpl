@@ -19,7 +19,6 @@ echo "[Interface]
 PrivateKey = ${server_private_key}
 Address = ${vpn_server_ip}
 ListenPort = ${vpn_port}
-
 ${wg_peers}
 " | sudo tee $SERVER_WG_CONFIG
 
