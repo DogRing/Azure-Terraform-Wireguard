@@ -16,7 +16,7 @@ data "template_file" "microk8s" {
 }
 
 data "template_file" "normal" {
-  count = var.node_count
+  count = var.microk8s ? 0 : var.node_count
   template = file(var.vm_config.template_file)
   vars = {
     username = var.vm_config.username
@@ -57,6 +57,7 @@ resource "azurerm_linux_virtual_machine" "main" {
 
   provisioner "local-exec" {
     when = destroy
+    # command = "kubectl delete node ${lower(self.name)} --force"
     command = "microk8s remove-node ${self.private_ip_address} --force"
     on_failure = "continue"
   }
