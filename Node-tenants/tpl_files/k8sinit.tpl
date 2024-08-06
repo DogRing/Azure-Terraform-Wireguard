@@ -63,15 +63,23 @@ sudo systemctl enable docker
 sudo systemctl restart docker
 sudo systemctl restart containerd.service
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key |
-sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | 
-sudo tee /etc/apt/sources.list.d/kubernetes.list
+# curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key |
+# sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | 
+# sudo tee /etc/apt/sources.list.d/kubernetes.list
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.30/deb/Release.key |
+ sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" | 
+ sudo tee /etc/apt/sources.list.d/kubernetes.list
 sudo apt update
 
 sudo apt -y install kubelet kubeadm kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
+
+# curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+# sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+
 
 sudo systemctl daemon-reload
 sudo systemctl restart kubelet.service
@@ -92,12 +100,14 @@ complete -F __start_kubectl k" >> /home/${username}/.bashrc
 sudo reboot
 
 sudo kubeadm init --pod-network-cidr=10.96.0.0/12 --apiserver-advertise-address=10.20.1.4
-sudo cp /etc/kubernetes/admin.conf ~/.kube/config
-sudo chown $(id -u):$(id -g) ~/.kube/config
+# join 토큰
+# kubeadm token create --print-join-command
+sudo cp /etc/kubernetes/admin.conf /home/${username}/.kube/config
+sudo chown $(id -u):$(id -g) /home/${username}/.kube/config
 
 # calico 설치
-curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
-kubectl apply -f calico.yaml
+# kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/calico.yaml
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.1/manifests/calico.yaml
 
 # dashboard 설치
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
@@ -125,7 +135,7 @@ subjects:
   namespace: kubernetes-dashboard
 " > ClusterRoleBinding-admin-user.yml
 
-kubeclt apply -f dashboard-admin-user.yaml
+kubectl apply -f dashboard-admin-user.yaml
 kubectl apply -f ClusterRoleBinding-admin-user.yml
 
 # SA 토큰 확인
@@ -140,3 +150,38 @@ openssl pkcs12 -export -clcerts -inkey kubecfg.key -in kubecfg.crt -out kubecfg.
 
 # 클러스터 생성시 가지는 인증서
 sudo cp /etc/kubernetes/pki/ca.crt  ./
+
+# kubeshark
+sh <(curl -Ls https://kubeshark.co/install)
+ks tap # 클러스터 내 패패킷을 캡쳐
+
+# kubectl create ns portainer
+echo "apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: portainer-pv
+  namespace: portainer
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  local:
+    path: /DATA1
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - {key: kubernetes.io/hostname, operator: In, values: [vm-gpu-node-0]}
+" > portainer-pv.yaml
+kubectl apply -n portainer -f portainer-pv.yaml
+
+# Portainer LB
+kubectl apply -n portainer -f https://raw.githubusercontent.com/portainer/k8s/master/deploy/manifests/portainer/portainer-lb.yaml
+
+# Portainer Nodeport
+kubectl apply -n portainer -f https://raw.githubusercontent.com/portainer/k8s/master/deploy/manifests/portainer/portainer.yaml
+
+# portainer 창 오류 시
+kubectl rollout restart deployment -n portainer portainer
