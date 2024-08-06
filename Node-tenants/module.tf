@@ -5,10 +5,11 @@ module "Node-k8s" {
   node_count = 1
 
   location = "koreacentral"
-  address_space = "10.10.0.0/16"
-  subnet_addresses = ["10.10.1.0/24"]
-  route_addresses = [ "10.255.255.128/25", "192.168.0.0/24", "10.20.0.0/16" ]
+  address_space = "10.11.0.0/16"
+  subnet_addresses = ["10.11.1.0/24"]
+  route_addresses = [ "192.168.255.128/25", "192.168.0.0/24", "10.13.0.0/16" ]
 
+  microk8s = true
   vpn_config = var.vpn_config
   vm_config = var.vm_config.k8s
 }
@@ -20,10 +21,11 @@ module "Node-gpu" {
   node_count = 1
 
   location = "koreacentral"
-  address_space = "10.20.0.0/16"
-  subnet_addresses = ["10.20.1.0/24"]
-  route_addresses = [ "10.255.255.128/25", "192.168.0.0/24", "10.10.0.0/16" ]
+  address_space = "10.13.0.0/16"
+  subnet_addresses = ["10.13.1.0/24"]
+  route_addresses = [ "192.168.255.128/25", "192.168.0.0/24", "10.11.0.0/16" ]
 
+  microk8s = true
   vpn_config = var.vpn_config
   vm_config = var.vm_config.gpu
 }
