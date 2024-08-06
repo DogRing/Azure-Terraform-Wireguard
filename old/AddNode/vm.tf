@@ -39,8 +39,8 @@ resource "azurerm_linux_virtual_machine" "main" {
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
     version   = "latest"
   }
 
@@ -51,6 +51,16 @@ resource "azurerm_linux_virtual_machine" "main" {
   }
   custom_data = base64encode(data.template_file.userdata[count.index].rendered)
 }
+
+# resource "azurerm_virtual_machine_extension" "nvidia" {
+#   count = terraform.workspace == "gpu" ? length(azurerm_linux_virtual_machine.main) : 0
+#   name = "gpu-driver-extension"
+#   virtual_machine_id = azurerm_linux_virtual_machine.main[count.index].id
+#   publisher = "Microsoft.HpcCompute"
+#   type = "NvidiaGpuDriverLinux"
+#   type_handler_version = "1.9"
+#   auto_upgrade_minor_version = true
+# }
 
 resource "azurerm_network_interface" "main" {
   count = local.az_var.node_count
