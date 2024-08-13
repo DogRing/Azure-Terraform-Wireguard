@@ -7,6 +7,10 @@ sudo apt -y install ntp
 sudo systemctl restart ntp
 sudo sysctl -w net.ipv4.ip_forward=1
 
+sudo tee -a /etc/hosts <<EOF
+${hosts}
+EOF
+
 sudo cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
 overlay
 br_netfilter
@@ -97,9 +101,33 @@ alias kr='kubectl run'
 alias kd='kubectl delete'
 complete -F __start_kubectl k" >> /home/${username}/.bashrc
 
+sudo cat <<EOF | sudo tee /usr/local/bin/join-node.sh
+#!/bin/bash
+sleep 60
+/usr/bin/${k8sAddNode}
+EOF
+sudo chmod +x /usr/local/bin/join-node.sh
+
+sudo cat <<EOF | sudo tee /etc/systemd/system/k8s-join-node.service
+[Unit]
+Description=Run kubeadm join with delay
+
+[Service]
+ExecStart=/usr/local/bin/join-node.sh
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl enable k8s-join-node.service
+
+sudo mkdir -p /DATA1
+
 sudo reboot
 
-sudo kubeadm init --pod-network-cidr=10.96.0.0/12 --apiserver-advertise-address=10.20.1.4
+sudo kubeadm init --pod-network-cidr=10.96.0.0/12 --apiserver-advertise-address=192.168.0.9
+sudo kubeadm init --pod-network-cidr=10.96.0.0/12 --apiserver-advertise-address=10.13.1.4
 # join 토큰
 # kubeadm token create --print-join-command
 sudo cp /etc/kubernetes/admin.conf /home/${username}/.kube/config
@@ -155,6 +183,7 @@ sudo cp /etc/kubernetes/pki/ca.crt  ./
 sh <(curl -Ls https://kubeshark.co/install)
 ks tap # 클러스터 내 패패킷을 캡쳐
 
+sudo mkdir -p /DATA1
 # kubectl create ns portainer
 echo "apiVersion: v1
 kind: PersistentVolume
@@ -176,6 +205,7 @@ spec:
         - {key: kubernetes.io/hostname, operator: In, values: [vm-gpu-node-0]}
 " > portainer-pv.yaml
 kubectl apply -n portainer -f portainer-pv.yaml
+# /DATA1 의 경로가 없을 수 있다. 
 
 # Portainer LB
 kubectl apply -n portainer -f https://raw.githubusercontent.com/portainer/k8s/master/deploy/manifests/portainer/portainer-lb.yaml

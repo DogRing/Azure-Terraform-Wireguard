@@ -1,6 +1,11 @@
 data "external" "microk8sAddNode" {
   count = var.microk8s ? var.node_count : 0
-  program = ["bash", "${path.module}/get_node_config.sh"]
+  program = ["bash", "${path.module}/microk8s_token.sh"]
+}
+
+data "external" "k8sAddNode" {
+  count = var.microk8s ? 0 : var.node_count
+  program = ["bash", "${path.module}/k8s_token.sh"]
 }
 
 data "template_file" "microk8s" {
@@ -8,6 +13,7 @@ data "template_file" "microk8s" {
   template = file(var.vm_config.template_file)
   vars = {
     vpn_ip = data.azurerm_network_interface.vpn.private_ip_address
+    hosts = var.hosts
     microk8sAddNode = data.external.microk8sAddNode[count.index].result.output
     node_name = lower("vm-${var.project_name}-${count.index}")
     node_ip = azurerm_network_interface.main[count.index].private_ip_address
@@ -15,16 +21,18 @@ data "template_file" "microk8s" {
   }
 }
 
-data "template_file" "normal" {
+data "template_file" "k8s" {
   count = var.microk8s ? 0 : var.node_count
   template = file(var.vm_config.template_file)
   vars = {
     username = var.vm_config.username
+    hosts = var.hosts
+    k8sAddNode = data.external.k8sAddNode[count.index].result.output
   }
 }
 
 locals {
-  custom_data = var.microk8s ? data.template_file.microk8s : data.template_file.normal
+  custom_data = var.microk8s ? data.template_file.microk8s : data.template_file.k8s
 }
 
 resource "azurerm_linux_virtual_machine" "main" {
@@ -57,8 +65,8 @@ resource "azurerm_linux_virtual_machine" "main" {
 
   provisioner "local-exec" {
     when = destroy
-    # command = "kubectl delete node ${lower(self.name)} --force"
-    command = "microk8s remove-node ${self.private_ip_address} --force"
+    command = "kubectl delete node ${lower(self.name)}"
+    # command = "microk8s remove-node ${self.private_ip_address} --force"
     on_failure = "continue"
   }
   custom_data = base64encode(local.custom_data[count.index].rendered)

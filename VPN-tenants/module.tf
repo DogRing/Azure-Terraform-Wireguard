@@ -5,11 +5,11 @@ module "network-k8s" {
   project_name = "VPN"
   location     = "koreacentral"
 
-  vnet_address_space    = "192.168.0.0/16"
+  vnet_address_space    = "192.168.255.0/24"
   subnet_address_prefix = "192.168.255.0/25"
   vm_private_ip         = "192.168.255.4"
   vpn_interface_ip      = "192.168.255.128/25"
-  allowed_ips           = "10.11.0.0/16"
+  allowed_ips           = "192.168.1.0/24"
 
   # vnet_address_space    = "10.255.0.0/16"
   # subnet_address_prefix = "10.255.255.0/25"
@@ -28,11 +28,11 @@ module "network-gpu" {
   project_name = "VPN"
   location     = "koreacentral"
 
-  vnet_address_space    = "192.168.0.0/16"
+  vnet_address_space    = "192.168.255.0/24"
   subnet_address_prefix = "192.168.255.0/25"
   vm_private_ip         = "192.168.255.4"
   vpn_interface_ip      = "192.168.255.130/25"
-  allowed_ips           = "10.13.0.0/16"
+  allowed_ips           = "192.168.3.0/24"
 
   # vnet_address_space    = "10.255.0.0/16"
   # subnet_address_prefix = "10.255.255.0/25"
@@ -55,7 +55,7 @@ module "wireguard-k8s" {
 
 
   # route_address_prefix = ["192.168.0.0/16", "10.20.0.0/16", "10.255.255.128/25"]
-  route_address_prefix = ["192.168.0.0/24", "10.13.0.0/16", "192.168.255.128/25"]
+  route_address_prefix = ["192.168.0.0/24", "192.168.3.0/24", "192.168.255.128/25"]
   vm_data              = var.vm_data
   wg_peers             = [jsondecode(module.network-gpu.wg-peer), var.on_prem_k8s_peer]
 }
@@ -66,7 +66,7 @@ module "wireguard-gpu" {
   network = module.network-gpu
 
   # route_address_prefix = ["192.168.0.0/16", "10.10.0.0/16", "10.255.255.128/25"]
-  route_address_prefix = ["192.168.0.0/24", "10.11.0.0/16", "192.168.255.128/25"]
+  route_address_prefix = ["192.168.0.0/24", "192.168.1.0/24", "192.168.255.128/25"]
   vm_data              = var.vm_data
   wg_peers             = [jsondecode(module.network-k8s.wg-peer), var.on_prem_gpu_peer]
 }
