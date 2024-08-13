@@ -8,6 +8,7 @@ variable "route_addresses" { type = list(string) }
 
 variable "vpn_config" { type = map(string) }
 variable "vm_config" { type = map(string) }
+variable "hosts" { type = string }
 variable "microk8s" {
   type = bool
   default = false
