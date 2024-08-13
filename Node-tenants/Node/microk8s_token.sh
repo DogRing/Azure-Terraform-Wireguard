@@ -5,3 +5,4 @@ output=$(microk8s.add-node | tail -n 1)
 
 # Output the result in JSON format
 echo "{\"output\": \"$output\"}"
+
