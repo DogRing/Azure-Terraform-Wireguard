@@ -1,10 +1,10 @@
 module "Node-k8s" {
-  project_name = "k8snode"
+  project_name = var.tf_config.k8s.project_name
   source = "./Node"
   providers = { azurerm = azurerm.k8s }
-  node_count = 1
+  node_count = var.tf_config.k8s.node_count
 
-  location = "koreacentral"
+  location = var.tf_config.k8s.location
   address_space = "192.168.1.0/24"
   subnet_addresses = ["192.168.1.0/24"]
   route_addresses = [ "192.168.255.128/25", "192.168.0.0/24", "192.168.3.0/24" ]
@@ -16,12 +16,12 @@ module "Node-k8s" {
 }
 
 module "Node-gpu" {
-  project_name = "gpunode"
+  project_name = var.tf_config.gpu.project_name
   source = "./Node"
   providers = { azurerm = azurerm.gpu }
-  node_count = 1
+  node_count = var.tf_config.gpu.node_count
 
-  location = "koreacentral"
+  location = var.tf_config.gpu.location
   address_space = "192.168.3.0/24"
   subnet_addresses = ["192.168.3.0/24"]
   route_addresses = [ "192.168.255.128/25", "192.168.0.0/24", "192.168.1.0/24" ]
