@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+  }
+}
+
 # Node network
 resource "azurerm_resource_group" "main" {
   name = "rg-${var.project_name}"
