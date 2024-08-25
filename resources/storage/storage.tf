@@ -1,26 +1,25 @@
 resource "azurerm_storage_account" "main" {
-  name = "changhsafiles"
-  resource_group_name = data.azurerm_resource_group.vpn.name
-  location = data.azurerm_resource_group.vpn.location
+  name = var.storage_name
+  resource_group_name = var.network.resource_group_name
+  location = var.network.location
   account_tier = "Standard"
   account_replication_type = "LRS"
 }
 
 resource "azurerm_storage_share" "main" {
-  name = "azdata"
+  name = var.files_path
   storage_account_name = azurerm_storage_account.main.name
-  quota = 100
+  quota = var.quota
 }
 
 resource "azurerm_private_endpoint" "main" {
-  name = "azdata-endpoint"
-  resource_group_name = data.azurerm_resource_group.vpn.name
-  location = data.azurerm_resource_group.vpn.location
-  subnet_id = data.azurerm_subnet.vpn.id
+  name = "${var.files_path}-endpoint"
+  resource_group_name = var.network.resource_group_name
+  location = var.network.location
+  subnet_id = var.network.subnet_id
 
-  
   private_service_connection {
-    name = "azdata-conn"
+    name = "${var.files_path}-conn"
     private_connection_resource_id = azurerm_storage_account.main.id
     is_manual_connection = false
     subresource_names = ["file"]
