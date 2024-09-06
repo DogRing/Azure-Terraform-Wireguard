@@ -41,28 +41,6 @@ resource "azurerm_virtual_network_peering" "Node-to-VPN" {
   allow_virtual_network_access = true
 }
 
-# NAT gateway
-resource "azurerm_nat_gateway" "main" {
-  name = "nat-${var.project_name}"
-  resource_group_name = azurerm_resource_group.main.name
-  location = azurerm_resource_group.main.location
-}
-resource "azurerm_public_ip" "main" {
-  name = "pip-${var.project_name}"
-  resource_group_name = azurerm_resource_group.main.name
-  location = azurerm_resource_group.main.location
-  allocation_method = "Static"
-  sku = "Standard"
-}
-resource "azurerm_nat_gateway_public_ip_association" "main" {
-  nat_gateway_id = azurerm_nat_gateway.main.id
-  public_ip_address_id = azurerm_public_ip.main.id
-}
-resource "azurerm_subnet_nat_gateway_association" "main" {
-  subnet_id = azurerm_subnet.main.id
-  nat_gateway_id = azurerm_nat_gateway.main.id
-}
-
 # Route table
 resource "azurerm_route_table" "main" {
   name = "routetable-${var.project_name}"
