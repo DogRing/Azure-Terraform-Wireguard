@@ -1,4 +1,4 @@
-module "Node-k8s" {
+module "az1" {
   project_name = var.tf_config.k8s.project_name
   source = "./Node"
   providers = { azurerm = azurerm.k8s }
@@ -15,7 +15,7 @@ module "Node-k8s" {
   hosts = var.etc_hosts.k8s
 }
 
-module "Node-gpu" {
+module "az2" {
   project_name = var.tf_config.gpu.project_name
   source = "./Node"
   providers = { azurerm = azurerm.gpu }
