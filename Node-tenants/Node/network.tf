@@ -81,6 +81,15 @@ resource "azurerm_subnet_route_table_association" "main" {
   route_table_id = azurerm_route_table.main[count.index].id
 }
 
+# resource "azurerm_route" "IGW" {
+#   count = length(azurerm_route_table.main)
+#   name                = "route-${var.project_name}-igw-${count.index}"
+#   resource_group_name = azurerm_resource_group.main.name
+#   route_table_name    = azurerm_route_table.main[count.index].name
+#   address_prefix      = "0.0.0.0/0"
+#   next_hop_type       = "Internet"
+# }
+
 resource "azurerm_route" "vpn-client" {
   count = (length(azurerm_route_table.main) * length(var.route_addresses))
   name = "route-${var.project_name}-vpn-client-${count.index}"
