@@ -9,6 +9,7 @@ module "az1" {
   subnet_addresses = ["192.168.1.0/24"]
   route_addresses = [ "192.168.255.128/25", "192.168.0.0/24", "192.168.3.0/24", "192.168.4.0/24" ]
 
+  nat = false
   # microk8s = true
   vpn_config = var.vpn_config
   vm_config = var.vm_config.k8s
@@ -26,6 +27,7 @@ module "az2" {
   subnet_addresses = ["192.168.3.0/24"]
   route_addresses = [ "192.168.255.128/25", "192.168.0.0/24", "192.168.1.0/24", "192.168.4.0/24" ]
 
+  nat = false
   # microk8s = true
   vpn_config = var.vpn_config
   vm_config = var.vm_config.gpu

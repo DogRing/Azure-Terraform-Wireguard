@@ -41,29 +41,28 @@ resource "azurerm_virtual_network_peering" "Node-to-VPN" {
   remote_virtual_network_id = azurerm_virtual_network.main.id
   allow_virtual_network_access = true
 }
-
-# NAT gateway
-resource "azurerm_nat_gateway" "main" {
-  count = length(azurerm_subnet.main)
-  name = "nat-${var.project_name}-${count.index}"
-  resource_group_name = azurerm_resource_group.main.name
-  location = azurerm_resource_group.main.location
-}
 resource "azurerm_public_ip" "main" {
-  count = length(azurerm_nat_gateway.main)
+  count = var.nat ? length(azurerm_nat_gateway.main) : var.node_count
   name = "pip-${var.project_name}-${count.index}"
   resource_group_name = azurerm_resource_group.main.name
   location = azurerm_resource_group.main.location
   allocation_method = "Static"
   sku = "Standard"
 }
+# NAT gateway
+resource "azurerm_nat_gateway" "main" {
+  count = var.nat ? length(azurerm_subnet.main) : 0
+  name = "nat-${var.project_name}-${count.index}"
+  resource_group_name = azurerm_resource_group.main.name
+  location = azurerm_resource_group.main.location
+}
 resource "azurerm_nat_gateway_public_ip_association" "main" {
-  count = length(azurerm_nat_gateway.main)
+  count = var.nat ? length(azurerm_nat_gateway.main) : 0
   nat_gateway_id = azurerm_nat_gateway.main[count.index].id
   public_ip_address_id = azurerm_public_ip.main[count.index].id
 }
 resource "azurerm_subnet_nat_gateway_association" "main" {
-  count = length(azurerm_nat_gateway.main)
+  count = var.nat ? length(azurerm_nat_gateway.main) : 0
   subnet_id = azurerm_subnet.main[count.index].id
   nat_gateway_id = azurerm_nat_gateway.main[count.index].id
 }
@@ -81,14 +80,14 @@ resource "azurerm_subnet_route_table_association" "main" {
   route_table_id = azurerm_route_table.main[count.index].id
 }
 
-# resource "azurerm_route" "IGW" {
-#   count = length(azurerm_route_table.main)
-#   name                = "route-${var.project_name}-igw-${count.index}"
-#   resource_group_name = azurerm_resource_group.main.name
-#   route_table_name    = azurerm_route_table.main[count.index].name
-#   address_prefix      = "0.0.0.0/0"
-#   next_hop_type       = "Internet"
-# }
+resource "azurerm_route" "IGW" {
+  count = var.nat ? 0 : length(azurerm_route_table.main)
+  name                = "route-${var.project_name}-igw-${count.index}"
+  resource_group_name = azurerm_resource_group.main.name
+  route_table_name    = azurerm_route_table.main[count.index].name
+  address_prefix      = "0.0.0.0/0"
+  next_hop_type       = "Internet"
+}
 
 resource "azurerm_route" "vpn-client" {
   count = (length(azurerm_route_table.main) * length(var.route_addresses))

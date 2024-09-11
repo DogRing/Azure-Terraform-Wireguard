@@ -93,5 +93,6 @@ resource "azurerm_network_interface" "main" {
     name = "nic-config-${var.project_name}-${count.index}"
     subnet_id = azurerm_subnet.main[count.index % length(azurerm_subnet.main)].id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id = var.nat ? null : azurerm_public_ip.main[count.index].id
   }
 }
