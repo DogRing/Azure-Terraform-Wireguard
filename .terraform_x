@@ -1,0 +1,1 @@
+chmod +x .terraform/providers/registry.terraform.io/hashicorp/*/*/linux_amd64/terraform-provider-*

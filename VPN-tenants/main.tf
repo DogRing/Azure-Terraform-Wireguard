@@ -47,25 +47,23 @@ module "network-gpu" {
 }
 
 
-module "wireguard-k8s" {
+module "az1" {
   source       = "./wireguard"
   providers    = { azurerm = azurerm.k8s }
   project_name = "VPN"
   network      = module.network-k8s
 
 
-  # route_address_prefix = ["192.168.0.0/16", "10.20.0.0/16", "10.255.255.128/25"]
   route_address_prefix = ["192.168.0.0/24", "192.168.3.0/24", "192.168.255.128/25", "192.168.4.0/24"]
   vm_data              = var.vm_data
   wg_peers             = [jsondecode(module.network-gpu.wg-peer), var.on_prem_k8s_peer]
 }
-module "wireguard-gpu" {
+module "az2" {
   source       = "./wireguard"
   providers    = { azurerm = azurerm.gpu }
   project_name = "VPN"
   network = module.network-gpu
 
-  # route_address_prefix = ["192.168.0.0/16", "10.10.0.0/16", "10.255.255.128/25"]
   route_address_prefix = ["192.168.0.0/24", "192.168.1.0/24", "192.168.255.128/25"]
   vm_data              = var.vm_data
   wg_peers             = [jsondecode(module.network-k8s.wg-peer), var.on_prem_gpu_peer]

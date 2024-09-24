@@ -115,5 +115,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable k8s-join-node.service
 
 sudo mkdir -p /DATA1/zk
+sudo chown -R 1000:1000 /DATA1/zk
+sudo chmod -R 755 /DATA1/zk
 
 sudo reboot
