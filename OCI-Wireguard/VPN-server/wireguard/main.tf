@@ -85,6 +85,13 @@ resource "oci_core_instance" "main" {
   }
 
   preserve_boot_volume = false
+
+  # Ignore changes to user_data to prevent VM recreation
+  lifecycle {
+    ignore_changes = [
+      metadata["user_data"],  # Ignore userdata changes
+    ]
+  }
 }
 
 # Get instance's public IP
