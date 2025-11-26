@@ -7,69 +7,140 @@ terraform {
   }
 }
 
-# Node VCN
-resource "oci_core_vcn" "node" {
+# Reference existing VPN VCN (created by VPN-server)
+data "oci_core_vcn" "vpn" {
+  vcn_id = var.vpn_vcn_id
+}
+
+# Get VPN server's private IP for routing
+data "oci_core_private_ips" "vpn_server" {
+  ip_address = var.vpn_server_private_ip
+  subnet_id  = data.oci_core_subnets.vpn_subnet.subnets[0].id
+}
+
+# Get VPN subnet (to find private IPs)
+data "oci_core_subnets" "vpn_subnet" {
   compartment_id = var.compartment_id
-  cidr_blocks    = [var.vcn_cidr]
-  display_name   = "vcn-${var.project_name}"
-  dns_label      = replace(var.project_name, "-", "")
+  vcn_id         = var.vpn_vcn_id
+
+  filter {
+    name   = "cidr_block"
+    values = [var.vpn_subnet_cidr]
+  }
 }
 
-# Node Subnet
-resource "oci_core_subnet" "node" {
-  compartment_id             = var.compartment_id
-  vcn_id                     = oci_core_vcn.node.id
-  cidr_block                 = var.subnet_cidr
-  display_name               = "subnet-${var.project_name}"
-  dns_label                  = "subnet${replace(var.project_name, "-", "")}"
-  prohibit_public_ip_on_vnic = false
-  route_table_id             = oci_core_route_table.node.id
-  security_list_ids          = [oci_core_security_list.node.id]
+# Route Table for Node Subnet
+resource "oci_core_route_table" "node" {
+  compartment_id = var.compartment_id
+  vcn_id         = var.vpn_vcn_id
+  display_name   = "rt-${var.project_name}"
+
+  # Default route to Internet Gateway (inherit from VPN VCN)
+  dynamic "route_rules" {
+    for_each = data.oci_core_vcn.vpn.default_route_table_id != "" ? [1] : []
+    content {
+      network_entity_id = data.oci_core_internet_gateways.vpn_igw.internet_gateways[0].id
+      destination       = "0.0.0.0/0"
+      destination_type  = "CIDR_BLOCK"
+      description       = "Default route to Internet"
+    }
+  }
+
+  # Routes for VPN clients - send traffic to VPN server
+  dynamic "route_rules" {
+    for_each = var.route_cidrs
+    content {
+      network_entity_id = data.oci_core_private_ips.vpn_server.private_ips[0].id
+      destination       = route_rules.value
+      destination_type  = "CIDR_BLOCK"
+      description       = "Route to VPN clients via VPN server"
+    }
+  }
 }
 
-# Security List - Allow VPN traffic
+# Get Internet Gateway from VPN VCN
+data "oci_core_internet_gateways" "vpn_igw" {
+  compartment_id = var.compartment_id
+  vcn_id         = var.vpn_vcn_id
+}
+
+# Security List for Node Subnet
 resource "oci_core_security_list" "node" {
   compartment_id = var.compartment_id
-  vcn_id         = oci_core_vcn.node.id
+  vcn_id         = var.vpn_vcn_id
   display_name   = "seclist-${var.project_name}"
 
-  # Allow all outbound
+  # Egress: Allow all outbound
   egress_security_rules {
     protocol    = "all"
     destination = "0.0.0.0/0"
     description = "Allow all outbound traffic"
   }
 
-  # Allow VPN traffic
+  # Ingress: Allow from VPN server subnet
+  ingress_security_rules {
+    protocol    = "all"
+    source      = var.vpn_subnet_cidr
+    description = "Allow all from VPN server subnet"
+  }
+
+  # Ingress: Allow from VPN clients
   ingress_security_rules {
     protocol    = "all"
     source      = var.vpn_client_cidr
-    description = "Allow VPN traffic"
+    description = "Allow all from VPN clients"
   }
 
-  # Allow ICMP
+  # Ingress: Allow within same subnet
   ingress_security_rules {
-    protocol    = "1"
+    protocol    = "all"
+    source      = var.node_subnet_cidr
+    description = "Allow traffic within node subnet"
+  }
+
+  # Ingress: Allow ICMP
+  ingress_security_rules {
+    protocol    = "1"  # ICMP
     source      = "0.0.0.0/0"
     description = "ICMP for ping"
   }
 }
 
-# Network Security Group
+# Network Security Group for Node Resources
 resource "oci_core_network_security_group" "node" {
   compartment_id = var.compartment_id
-  vcn_id         = oci_core_vcn.node.id
+  vcn_id         = var.vpn_vcn_id
   display_name   = "nsg-${var.project_name}"
 }
 
-# NSG Rule: Allow VPN traffic
-resource "oci_core_network_security_group_security_rule" "vpn_inbound" {
+# NSG Rule: Allow from VPN server
+resource "oci_core_network_security_group_security_rule" "vpn_server_inbound" {
+  network_security_group_id = oci_core_network_security_group.node.id
+  direction                 = "INGRESS"
+  protocol                  = "all"
+  source                    = var.vpn_subnet_cidr
+  source_type               = "CIDR_BLOCK"
+  description               = "Allow all from VPN server subnet"
+}
+
+# NSG Rule: Allow from VPN clients
+resource "oci_core_network_security_group_security_rule" "vpn_clients_inbound" {
   network_security_group_id = oci_core_network_security_group.node.id
   direction                 = "INGRESS"
   protocol                  = "all"
   source                    = var.vpn_client_cidr
   source_type               = "CIDR_BLOCK"
-  description               = "Allow VPN traffic"
+  description               = "Allow all from VPN clients"
+}
+
+# NSG Rule: Allow within subnet
+resource "oci_core_network_security_group_security_rule" "intra_subnet" {
+  network_security_group_id = oci_core_network_security_group.node.id
+  direction                 = "INGRESS"
+  protocol                  = "all"
+  source                    = var.node_subnet_cidr
+  source_type               = "CIDR_BLOCK"
+  description               = "Allow traffic within node subnet"
 }
 
 # NSG Rule: Allow all outbound
@@ -82,94 +153,14 @@ resource "oci_core_network_security_group_security_rule" "egress_all" {
   description               = "Allow all outbound"
 }
 
-# Local Peering Gateway - Node side
-resource "oci_core_local_peering_gateway" "node" {
-  compartment_id = var.compartment_id
-  vcn_id         = oci_core_vcn.node.id
-  display_name   = "lpg-${var.project_name}-to-vpn"
-}
-
-# Local Peering Gateway - VPN side
-resource "oci_core_local_peering_gateway" "vpn" {
-  compartment_id = var.vpn_config.compartment_id
-  vcn_id         = var.vpn_config.vcn_id
-  display_name   = "lpg-vpn-to-${var.project_name}"
-  peer_id        = oci_core_local_peering_gateway.node.id
-}
-
-# Route Table
-resource "oci_core_route_table" "node" {
-  compartment_id = var.compartment_id
-  vcn_id         = oci_core_vcn.node.id
-  display_name   = "rt-${var.project_name}"
-
-  # Route VPN client traffic through LPG
-  dynamic "route_rules" {
-    for_each = var.route_cidrs
-    content {
-      network_entity_id = oci_core_local_peering_gateway.node.id
-      destination       = route_rules.value
-      destination_type  = "CIDR_BLOCK"
-      description       = "Route to VPN clients"
-    }
-  }
-}
-
-# Data source to get VPN VCN route table
-data "oci_core_route_tables" "vpn" {
-  compartment_id = var.vpn_config.compartment_id
-  vcn_id         = var.vpn_config.vcn_id
-}
-
-# Get the default route table for VPN VCN
-locals {
-  vpn_default_route_table_id = data.oci_core_route_tables.vpn.route_tables[0].id
-}
-
-# Add route to VPN VCN route table for Node network
-resource "oci_core_route_table" "vpn_updated" {
-  compartment_id = var.vpn_config.compartment_id
-  vcn_id         = var.vpn_config.vcn_id
-  display_name   = "rt-vpn-updated"
-
-  # Preserve existing routes (Internet Gateway)
-  dynamic "route_rules" {
-    for_each = data.oci_core_route_tables.vpn.route_tables[0].route_rules
-    content {
-      network_entity_id = route_rules.value.network_entity_id
-      destination       = route_rules.value.destination
-      destination_type  = route_rules.value.destination_type
-      description       = route_rules.value.description
-    }
-  }
-
-  # Add route to Node network
-  route_rules {
-    network_entity_id = oci_core_local_peering_gateway.vpn.id
-    destination       = var.vcn_cidr
-    destination_type  = "CIDR_BLOCK"
-    description       = "Route to ${var.project_name} network"
-  }
-}
-
-# Update VPN subnet to use the new route table
-data "oci_core_subnets" "vpn" {
-  compartment_id = var.vpn_config.compartment_id
-  vcn_id         = var.vpn_config.vcn_id
-}
-
-# Note: This will replace the route table association
-# You may need to manually update the subnet's route table in production
-resource "null_resource" "update_vpn_subnet_route_table" {
-  triggers = {
-    route_table_id = oci_core_route_table.vpn_updated.id
-    subnet_id      = var.vpn_config.subnet_id
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "VPN subnet route table should be updated to: ${oci_core_route_table.vpn_updated.id}"
-      echo "Please update the VPN subnet route table manually or use the OCI Console/API"
-    EOT
-  }
+# Node Subnet (in existing VPN VCN)
+resource "oci_core_subnet" "node" {
+  compartment_id             = var.compartment_id
+  vcn_id                     = var.vpn_vcn_id
+  cidr_block                 = var.node_subnet_cidr
+  display_name               = "subnet-${var.project_name}"
+  dns_label                  = "subnet${replace(var.project_name, "-", "")}"
+  prohibit_public_ip_on_vnic = false  # Set to true for private subnet
+  route_table_id             = oci_core_route_table.node.id
+  security_list_ids          = [oci_core_security_list.node.id]
 }

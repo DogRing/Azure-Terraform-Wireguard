@@ -123,13 +123,13 @@ resource "oci_core_network_security_group_security_rule" "egress_all" {
   description               = "Allow all outbound"
 }
 
-# Public Subnet
-resource "oci_core_subnet" "main" {
+# VPN Server Public Subnet
+resource "oci_core_subnet" "vpn" {
   compartment_id             = var.compartment_id
   vcn_id                     = oci_core_vcn.main.id
-  cidr_block                 = var.subnet_cidr
-  display_name               = "subnet-${var.project_name}"
-  dns_label                  = "subnet${replace(var.project_name, "-", "")}"
+  cidr_block                 = var.vpn_subnet_cidr
+  display_name               = "subnet-vpn-${var.project_name}"
+  dns_label                  = "subnetvpn${replace(var.project_name, "-", "")}"
   prohibit_public_ip_on_vnic = false
   route_table_id             = oci_core_route_table.main.id
   security_list_ids          = [oci_core_security_list.main.id]

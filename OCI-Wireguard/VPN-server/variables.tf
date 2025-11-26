@@ -40,13 +40,13 @@ variable "project_name" {
 
 ## Network
 variable "vcn_cidr" {
-  description = "VCN CIDR block"
+  description = "VCN CIDR block (large enough for multiple subnets)"
   type        = string
-  default     = "10.255.255.0/24"
+  default     = "10.255.0.0/16"
 }
 
-variable "subnet_cidr" {
-  description = "Subnet CIDR block"
+variable "vpn_subnet_cidr" {
+  description = "VPN server subnet CIDR block"
   type        = string
   default     = "10.255.255.0/24"
 }

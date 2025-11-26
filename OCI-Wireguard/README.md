@@ -9,8 +9,35 @@ OCI-Wireguard/
 ├── VPN-server/          # Wireguard VPN 서버
 │   ├── network/         # VCN, Subnet, Security 설정
 │   └── wireguard/       # Compute Instance 및 Wireguard 설정
-└── Node-network/        # VPN에 연결되는 노드 네트워크
-    └── network/         # VCN, Subnet, Peering 설정
+├── Node-network/        # Node용 서브넷 (VPN VCN 내)
+│   └── network/         # Subnet, Route, Security 설정
+├── scripts/             # 디버깅 스크립트
+│   ├── debug-server.sh  # 서버 자동 진단
+│   └── debug-client.sh  # 클라이언트 자동 진단
+├── DEPLOYMENT_GUIDE.md  # 상세 배포 가이드
+├── TROUBLESHOOTING.md   # 문제 해결 가이드
+└── COMPARISON_SUMMARY.md # Azure vs OCI 비교
+```
+
+## 네트워크 구조
+
+```
+VPN VCN (10.255.0.0/16)
+├── VPN Subnet (10.255.255.0/24)
+│   └── Wireguard VPN Server (10.255.255.10)
+│
+└── Node Subnet (10.255.1.0/24)  ← 같은 VCN 내
+    └── Node Resources
+
+VPN 클라이언트 (192.168.255.0/24)
+└── Wireguard 터널 → VPN 서버 → Node 서브넷
+```
+
+**특징:**
+- ✅ **단일 VCN**: LPG (Peering) 불필요
+- ✅ **간단한 라우팅**: 같은 VCN 내 서브넷 간 통신
+- ✅ **비용 절감**: Peering Gateway 비용 없음
+- ✅ **관리 용이**: 하나의 VCN만 관리
 ```
 
 ## 사전 준비
@@ -46,9 +73,9 @@ region           = "ap-seoul-1"
 # Compartment
 compartment_id = "ocid1.compartment.oc1..aaaaa..."
 
-# Network
-vcn_cidr = "10.255.255.0/24"
-subnet_cidr = "10.255.255.0/24"
+# Network (large VCN for multiple subnets)
+vcn_cidr = "10.255.0.0/16"
+vpn_subnet_cidr = "10.255.255.0/24"
 
 # Wireguard
 vpn_port = "51820"
@@ -78,13 +105,24 @@ terraform output
 - VPN 서버 Private IP
 - Wireguard Public Key
 
-### 3. Node 네트워크 배포
+### 3. Node 서브넷 배포 (선택사항)
+
+VPN을 통해 접근할 리소스를 위한 서브넷을 추가합니다.
+
 ```bash
 cd ../Node-network
+cp terraform.tfvars.example terraform.tfvars
+
+# terraform.tfvars 편집
+# vpn_vcn_id = VPN-server의 terraform output vcn_id
+nano terraform.tfvars
+
 terraform init
 terraform plan
 terraform apply
 ```
+
+**주의**: Node-network는 VPN VCN 내에 서브넷만 추가하므로, VPN-server가 먼저 배포되어야 합니다.
 
 ## Wireguard 클라이언트 설정
 
@@ -132,7 +170,7 @@ OCI Always Free 리소스 활용:
 | **보안 그룹** | NSG | NSG or Security List |
 | **Public IP** | Public IP 리소스 | VNIC에 직접 할당 |
 | **IP Forwarding** | `enable_ip_forwarding` | `skip_source_dest_check` |
-| **VNet Peering** | VNet Peering | Local Peering Gateway |
+| **네트워크 구조** | VNet Peering 필요 | 같은 VCN 내 서브넷 |
 | **VM** | Virtual Machine | Compute Instance |
 | **VM 크기** | Size (Standard_B1s) | Shape (VM.Standard.E4.Flex) |
 
@@ -150,9 +188,10 @@ OCI Always Free 리소스 활용:
 - `skip_source_dest_check = true` 확인
 - Route Table 설정 확인
 
-### 3. Peering 통신 안됨
-- Local Peering Gateway 양방향 설정 확인
-- Route Table에 Peering 경로 추가 확인
+### 3. Node 서브넷 통신 안됨
+- Route Table 확인 (VPN 클라이언트 → VPN 서버 IP)
+- Security List 확인 (VPN 클라이언트 CIDR 허용)
+- VPN 서버 IP Forwarding 확인
 
 ## 참고 자료
 

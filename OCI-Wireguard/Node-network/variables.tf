@@ -38,45 +38,47 @@ variable "project_name" {
   default     = "node-network"
 }
 
-## Network
-variable "vcn_cidr" {
-  description = "VCN CIDR block"
+## VPN VCN Reference (existing VCN created by VPN-server)
+variable "vpn_vcn_id" {
+  description = "VPN VCN OCID (from VPN-server output)"
   type        = string
-  default     = "192.168.4.0/24"
 }
 
-variable "subnet_cidr" {
-  description = "Subnet CIDR block"
+## Node Network Configuration
+variable "node_subnet_cidr" {
+  description = "Node subnet CIDR block (within VPN VCN)"
   type        = string
-  default     = "192.168.4.0/24"
+  default     = "10.255.1.0/24"
 }
 
-## VPN Configuration
-variable "vpn_config" {
-  description = "VPN network configuration"
-  type = object({
-    compartment_id = string
-    vcn_id         = string
-    subnet_id      = string
-    private_ip     = string
-  })
+## VPN Server Configuration (for routing)
+variable "vpn_server_private_ip" {
+  description = "VPN server private IP address"
+  type        = string
+  default     = "10.255.255.10"
+}
+
+## VPN Configuration (for security rules)
+variable "vpn_subnet_cidr" {
+  description = "VPN server subnet CIDR (for security rules)"
+  type        = string
+  default     = "10.255.255.0/24"
+}
+
+variable "vpn_client_cidr" {
+  description = "VPN client CIDR block (for security rules)"
+  type        = string
+  default     = "192.168.255.0/24"
 }
 
 ## Route Configuration
 variable "route_cidrs" {
-  description = "CIDR blocks to route through VPN"
+  description = "CIDR blocks to route through VPN (VPN clients that should access this subnet)"
   type        = list(string)
   default = [
-    "192.168.255.128/25",
-    "192.168.0.0/24",
+    "192.168.255.0/24",    # VPN clients
+    "192.168.0.0/24",      # Additional networks
     "192.168.1.0/24",
     "192.168.3.0/24"
   ]
-}
-
-## VPN Client CIDR (for security rules)
-variable "vpn_client_cidr" {
-  description = "VPN client CIDR block"
-  type        = string
-  default     = "10.255.255.0/24"
 }

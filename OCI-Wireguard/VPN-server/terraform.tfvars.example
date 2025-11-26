@@ -12,10 +12,10 @@ compartment_id = "ocid1.compartment.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 project_name = "wireguard-vpn"
 
 # Network Configuration
-vcn_cidr      = "10.255.255.0/24"
-subnet_cidr   = "10.255.255.0/24"
-vm_private_ip = "10.255.255.10"
-vpn_port      = "51820"
+vcn_cidr          = "10.255.0.0/16"      # Large VCN for multiple subnets
+vpn_subnet_cidr   = "10.255.255.0/24"    # VPN server subnet
+vm_private_ip     = "10.255.255.10"      # VPN server IP
+vpn_port          = "51820"
 
 # SSH Access (leave empty to disable SSH from internet)
 # enable_ssh = ["YOUR_IP_ADDRESS/32"]

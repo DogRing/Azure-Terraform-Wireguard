@@ -9,9 +9,9 @@ module "network" {
   project_name = var.project_name
 
   # Network
-  vcn_cidr      = var.vcn_cidr
-  subnet_cidr   = var.subnet_cidr
-  vm_private_ip = var.vm_private_ip
+  vcn_cidr          = var.vcn_cidr
+  vpn_subnet_cidr   = var.vpn_subnet_cidr
+  vm_private_ip     = var.vm_private_ip
 
   # Security
   vpn_port   = var.vpn_port

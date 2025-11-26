@@ -8,14 +8,17 @@ module "network" {
   # Project
   project_name = var.project_name
 
-  # Network
-  vcn_cidr    = var.vcn_cidr
-  subnet_cidr = var.subnet_cidr
+  # VPN VCN Reference
+  vpn_vcn_id = var.vpn_vcn_id
 
-  # VPN Configuration
-  vpn_config = var.vpn_config
+  # Node Network
+  node_subnet_cidr = var.node_subnet_cidr
+
+  # VPN Server Configuration
+  vpn_server_private_ip = var.vpn_server_private_ip
+  vpn_subnet_cidr       = var.vpn_subnet_cidr
+  vpn_client_cidr       = var.vpn_client_cidr
 
   # Route Configuration
-  route_cidrs      = var.route_cidrs
-  vpn_client_cidr  = var.vpn_client_cidr
+  route_cidrs = var.route_cidrs
 }

@@ -4,8 +4,18 @@ output "vcn_id" {
 }
 
 output "subnet_id" {
-  description = "Subnet OCID"
-  value       = oci_core_subnet.main.id
+  description = "VPN Subnet OCID"
+  value       = oci_core_subnet.vpn.id
+}
+
+output "vcn_cidr" {
+  description = "VCN CIDR block"
+  value       = oci_core_vcn.main.cidr_blocks[0]
+}
+
+output "vpn_subnet_cidr" {
+  description = "VPN Subnet CIDR block"
+  value       = oci_core_subnet.vpn.cidr_block
 }
 
 output "nsg_id" {

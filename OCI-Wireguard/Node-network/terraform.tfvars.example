@@ -11,26 +11,24 @@ compartment_id = "ocid1.compartment.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 # Project
 project_name = "node-network"
 
-# Network Configuration
-vcn_cidr    = "192.168.4.0/24"
-subnet_cidr = "192.168.4.0/24"
+# VPN VCN Reference (from VPN-server terraform output: vcn_id)
+vpn_vcn_id = "ocid1.vcn.oc1.ap-seoul-1.aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-# VPN Configuration (from VPN-server terraform output)
-vpn_config = {
-  compartment_id = "ocid1.compartment.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  vcn_id         = "ocid1.vcn.oc1.ap-seoul-1.aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  subnet_id      = "ocid1.subnet.oc1.ap-seoul-1.aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  private_ip     = "10.255.255.10"
-}
+# Node Network Configuration (must be within VPN VCN CIDR: 10.255.0.0/16)
+node_subnet_cidr = "10.255.1.0/24"
+
+# VPN Server Configuration (from VPN-server)
+vpn_server_private_ip = "10.255.255.10"    # VPN server IP
+vpn_subnet_cidr       = "10.255.255.0/24"  # VPN server subnet
+
+# VPN Client Configuration
+vpn_client_cidr = "192.168.255.0/24"  # VPN clients' IP range
 
 # Route Configuration
-# CIDRs to route through VPN
+# These CIDRs will be routed through the VPN server
 route_cidrs = [
-  "192.168.255.128/25",  # VPN clients
-  "192.168.0.0/24",
+  "192.168.255.0/24",  # VPN clients
+  "192.168.0.0/24",    # Additional networks
   "192.168.1.0/24",
   "192.168.3.0/24"
 ]
-
-# VPN client CIDR for security rules
-vpn_client_cidr = "10.255.255.0/24"

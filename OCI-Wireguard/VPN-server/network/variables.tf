@@ -18,8 +18,8 @@ variable "vcn_cidr" {
   type        = string
 }
 
-variable "subnet_cidr" {
-  description = "Subnet CIDR block"
+variable "vpn_subnet_cidr" {
+  description = "VPN server subnet CIDR block"
   type        = string
 }
 
