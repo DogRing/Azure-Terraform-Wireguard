@@ -1,0 +1,54 @@
+# OCI Authentication
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+user_ocid        = "ocid1.user.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+private_key_path = "~/.oci/oci_api_key.pem"
+region           = "ap-seoul-1"
+
+# Compartment
+compartment_id = "ocid1.compartment.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Project
+project_name = "wireguard-vpn"
+
+# Network Configuration
+vcn_cidr      = "10.255.255.0/24"
+subnet_cidr   = "10.255.255.0/24"
+vm_private_ip = "10.255.255.10"
+vpn_port      = "51820"
+
+# SSH Access (leave empty to disable SSH from internet)
+# enable_ssh = ["YOUR_IP_ADDRESS/32"]
+enable_ssh = []
+
+# VM Configuration
+# Always Free eligible: VM.Standard.E2.1.Micro
+# Flex shapes: VM.Standard.E4.Flex, VM.Standard.A1.Flex
+vm_shape               = "VM.Standard.E2.1.Micro"
+boot_volume_size_in_gbs = 50
+ssh_public_key_path    = "~/.ssh/id_rsa.pub"
+
+# For Flex shapes only:
+# vm_shape = "VM.Standard.E4.Flex"
+# vm_ocpus = 1
+# vm_memory_in_gbs = 6
+
+# Operating System
+operating_system         = "Canonical Ubuntu"
+operating_system_version = "22.04"
+vm_username             = "ubuntu"
+
+# Wireguard Configuration
+# Leave empty to auto-generate keys
+private_key = ""
+key_gen     = ""
+
+# Wireguard Peers (add client configurations here)
+wg_peers = [
+  # Example peer configuration:
+  # {
+  #   public_key  = "CLIENT_PUBLIC_KEY_HERE"
+  #   endpoint    = ""  # Leave empty for road warrior clients
+  #   allowed_ips = "192.168.255.2/32"
+  # }
+]
