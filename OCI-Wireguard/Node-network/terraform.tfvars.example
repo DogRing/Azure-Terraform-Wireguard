@@ -1,0 +1,36 @@
+# OCI Authentication
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+user_ocid        = "ocid1.user.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+private_key_path = "~/.oci/oci_api_key.pem"
+region           = "ap-seoul-1"
+
+# Compartment
+compartment_id = "ocid1.compartment.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Project
+project_name = "node-network"
+
+# Network Configuration
+vcn_cidr    = "192.168.4.0/24"
+subnet_cidr = "192.168.4.0/24"
+
+# VPN Configuration (from VPN-server terraform output)
+vpn_config = {
+  compartment_id = "ocid1.compartment.oc1..aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  vcn_id         = "ocid1.vcn.oc1.ap-seoul-1.aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  subnet_id      = "ocid1.subnet.oc1.ap-seoul-1.aaaaaaaxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+  private_ip     = "10.255.255.10"
+}
+
+# Route Configuration
+# CIDRs to route through VPN
+route_cidrs = [
+  "192.168.255.128/25",  # VPN clients
+  "192.168.0.0/24",
+  "192.168.1.0/24",
+  "192.168.3.0/24"
+]
+
+# VPN client CIDR for security rules
+vpn_client_cidr = "10.255.255.0/24"

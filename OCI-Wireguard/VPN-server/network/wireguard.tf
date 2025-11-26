@@ -1,0 +1,41 @@
+# Wireguard Key Generation
+resource "random_string" "key" {
+  length  = 8
+  upper   = true
+  lower   = true
+  special = false
+}
+
+locals {
+  key_name = var.key_gen == "" ? random_string.key.result : var.key_gen
+}
+
+# Generate public key from existing private key
+resource "terraform_data" "generate_public" {
+  count = var.private_key == "" ? 0 : 1
+  provisioner "local-exec" {
+    command = "echo ${var.private_key} | wg pubkey > ${path.module}/keys/${local.key_name}-public.key"
+  }
+}
+
+# Generate both private and public keys
+resource "terraform_data" "generate_keys" {
+  count = var.private_key == "" ? 1 : 0
+  provisioner "local-exec" {
+    command = "wg genkey | tee ${path.module}/keys/${local.key_name}-private.key | wg pubkey > ${path.module}/keys/${local.key_name}-public.key"
+  }
+  triggers_replace = { always_run = "${timestamp()}" }
+}
+
+# Read generated private key
+data "local_file" "private_key" {
+  count      = var.private_key == "" ? 1 : 0
+  depends_on = [terraform_data.generate_keys]
+  filename   = "${path.module}/keys/${local.key_name}-private.key"
+}
+
+# Read generated public key
+data "local_file" "public_key" {
+  depends_on = [terraform_data.generate_keys, terraform_data.generate_public]
+  filename   = "${path.module}/keys/${local.key_name}-public.key"
+}
