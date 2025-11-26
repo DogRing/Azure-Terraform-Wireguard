@@ -17,6 +17,9 @@ module "network" {
   vpn_port   = var.vpn_port
   enable_ssh = var.enable_ssh
 
+  # Remote Networks
+  remote_networks = var.remote_networks
+
   # Wireguard Key
   private_key = var.private_key
   key_gen     = var.key_gen

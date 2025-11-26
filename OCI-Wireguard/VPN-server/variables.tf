@@ -69,6 +69,12 @@ variable "enable_ssh" {
   default     = []
 }
 
+variable "remote_networks" {
+  description = "Remote networks accessible through VPN (routed via VPN server)"
+  type        = list(string)
+  default     = ["192.168.0.0/24"]
+}
+
 ## Wireguard
 variable "private_key" {
   description = "Wireguard private key (leave empty to auto-generate)"

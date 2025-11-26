@@ -23,17 +23,37 @@ resource "oci_core_internet_gateway" "main" {
   enabled        = true
 }
 
+# Get VPN server's private IP for routing
+data "oci_core_private_ips" "vpn_server" {
+  ip_address = var.vm_private_ip
+  subnet_id  = oci_core_subnet.vpn.id
+
+  depends_on = [oci_core_subnet.vpn]
+}
+
 # Route Table
 resource "oci_core_route_table" "main" {
   compartment_id = var.compartment_id
   vcn_id         = oci_core_vcn.main.id
   display_name   = "rt-${var.project_name}"
 
+  # Default route to Internet
   route_rules {
     network_entity_id = oci_core_internet_gateway.main.id
     destination       = "0.0.0.0/0"
     destination_type  = "CIDR_BLOCK"
     description       = "Default route to Internet"
+  }
+
+  # Routes for remote networks through VPN server
+  dynamic "route_rules" {
+    for_each = var.remote_networks
+    content {
+      network_entity_id = data.oci_core_private_ips.vpn_server.private_ips[0].id
+      destination       = route_rules.value
+      destination_type  = "CIDR_BLOCK"
+      description       = "Route to ${route_rules.value} via VPN server"
+    }
   }
 }
 

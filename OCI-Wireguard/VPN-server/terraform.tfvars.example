@@ -21,6 +21,13 @@ vpn_port          = "51820"
 # enable_ssh = ["YOUR_IP_ADDRESS/32"]
 enable_ssh = []
 
+# Remote Networks (accessible through VPN)
+# Networks that VPN clients can reach through the VPN server
+remote_networks = [
+  "192.168.0.0/24",   # Example: Remote office network
+  # "192.168.1.0/24", # Add more as needed
+]
+
 # VM Configuration
 # Always Free eligible: VM.Standard.E2.1.Micro
 # Flex shapes: VM.Standard.E4.Flex, VM.Standard.A1.Flex
